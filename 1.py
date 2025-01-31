@@ -36,8 +36,9 @@ async def install_package(child, package_name, sudo_password):
     except pexpect.exceptions.TIMEOUT:
         print(f"Timeout while installing {package_name}. Check network or try again.")
 
-async def run_remote_command(child, command):
-    """Run a command on the remote machine."""
+async def run_remote_command(child):
+    """Ask the user for a command and run it on the remote machine."""
+    command = input("Enter a command to run on the remote machine: ")
     child.sendline(command)
     child.expect("[$#>] ", timeout=None)
     print(child.before.decode().strip())
@@ -55,8 +56,7 @@ async def main():
     package_name = input("Enter the package name to install: ")
     await install_package(child, package_name, sudo_password)
     
-    command = input("Enter a command to run on the remote machine: ")
-    await run_remote_command(child, command)
+    await run_remote_command(child)
     
     child.sendline("exit")
     child.close()
