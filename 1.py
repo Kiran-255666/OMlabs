@@ -2,7 +2,6 @@ import asyncio
 import pexpect
 import nest_asyncio
 
-
 async def ssh_connect(host, username, password):
     """Connect to a remote host via SSH using pexpect and handle unknown host key prompt."""
     ssh_command = f"ssh {username}@{host}"
@@ -37,30 +36,6 @@ async def install_package(child, package_name, sudo_password):
     except pexpect.exceptions.TIMEOUT:
         print(f"Timeout while installing {package_name}. Check network or try again.")
 
-async def upload_file(child, local_path, remote_path, password):
-    """Upload a file to the remote machine using scp."""
-    scp_command = f"scp {local_path} {child.before.decode().strip()}:{remote_path}"
-    scp_child = pexpect.spawn(scp_command, timeout=None)
-    try:
-        scp_child.expect("password:")
-        scp_child.sendline(password)
-        scp_child.expect(pexpect.EOF)
-        print(f"Uploaded {local_path} to {remote_path}.")
-    except pexpect.exceptions.TIMEOUT:
-        print("SCP operation timed out.")
-
-async def download_file(child, remote_path, local_path, password):
-    """Download a file from the remote machine using scp."""
-    scp_command = f"scp {child.before.decode().strip()}:{remote_path} {local_path}"
-    scp_child = pexpect.spawn(scp_command, timeout=None)
-    try:
-        scp_child.expect("password:")
-        scp_child.sendline(password)
-        scp_child.expect(pexpect.EOF)
-        print(f"Downloaded {remote_path} to {local_path}.")
-    except pexpect.exceptions.TIMEOUT:
-        print("SCP operation timed out.")
-
 async def run_remote_command(child, command):
     """Run a command on the remote machine."""
     child.sendline(command)
@@ -80,21 +55,11 @@ async def main():
     package_name = input("Enter the package name to install: ")
     await install_package(child, package_name, sudo_password)
     
-    local_file = input("Enter the local file path to upload: ")
-    remote_file = input("Enter the remote file path: ")
-    await upload_file(child, local_file, remote_file, password)
-    
-    remote_file_to_download = input("Enter the remote file path to download: ")
-    local_file_save_path = input("Enter the local path to save the file: ")
-    await download_file(child, remote_file_to_download, local_file_save_path, password)
-    
     command = input("Enter a command to run on the remote machine: ")
     await run_remote_command(child, command)
     
     child.sendline("exit")
     child.close()
-
-
 
 if __name__ == "__main__":
     nest_asyncio.apply()  # Apply nest_asyncio patch
